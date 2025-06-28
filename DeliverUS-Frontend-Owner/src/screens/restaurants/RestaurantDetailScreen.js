@@ -74,6 +74,8 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
   }
 
   const renderProduct = ({ item }) => {
+    // console.log('IMAGE URL:', API_BASE_URL + '/' + item.image)
+    const scheduleColor = item.schedule !== null ? GlobalStyles.brandGreen : GlobalStyles.brandPrimary
     return (
       <ImageCard
         imageUri={item.image ? { uri: API_BASE_URL + '/' + item.image } : defaultProductImage}
@@ -81,9 +83,27 @@ export default function RestaurantDetailScreen ({ navigation, route }) {
       >
         <TextRegular numberOfLines={2}>{item.description}</TextRegular>
         <TextSemiBold textStyle={styles.price}>{item.price.toFixed(2)}€</TextSemiBold>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {item.schedule
+          ? (
+        <View style={{ flexDirection: 'row' }}>
+        <MaterialCommunityIcons name='timetable' size={20} color={scheduleColor}/>
+        <TextRegular textStyle={{ color: scheduleColor, fontSize: 16 }}>{item.schedule.startTime} - {item.schedule.endTime}</TextRegular>
+        </View>
+            )
+          : (
+          <View style={{ flexDirection: 'row' }}>
+          <MaterialCommunityIcons name='timetable' size={20} color={scheduleColor}/>
+          <TextRegular textStyle={{ color: scheduleColor, fontSize: 16 } }>Not scheduled</TextRegular>
+          </View>
+            )
+        }
+        <View>
         {!item.availability &&
           <TextRegular textStyle={styles.availability }>Not available</TextRegular>
         }
+        </View>
+        </View>
          <View style={styles.actionButtonsContainer}>
           <Pressable
             onPress={() => navigation.navigate('EditProductScreen', { id: item.id })

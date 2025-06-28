@@ -18,11 +18,14 @@ import { getRestaurantSchedules } from '../../api/RestaurantEndpoints'
 
 export default function EditProductScreen ({ navigation, route }) {
   const [open, setOpen] = useState(false)
+  /* SOLUCION */
+  const [isScheduleDropdownOpen, setIsScheduleDropdownOpen] = useState(false)
   const [productCategories, setProductCategories] = useState([])
   const [backendErrors, setBackendErrors] = useState()
   const [product, setProduct] = useState()
+  const [schedules, setSchedules] = useState([])
 
-  const [initialProductValues, setInitialProductValues] = useState({ name: null, description: null, price: null, order: null, productCategoryId: null, availability: null, image: null })
+  const [initialProductValues, setInitialProductValues] = useState({ name: null, description: null, price: null, order: null, productCategoryId: null, availability: null, image: null, scheduleId: null }) // Hay que añadir el valor inicial de scheduleId
   const validationSchema = yup.object().shape({
     name: yup
       .string()
@@ -43,7 +46,13 @@ export default function EditProductScreen ({ navigation, route }) {
       .number()
       .positive()
       .integer()
-      .required('Product category is required')
+      .required('Product category is required'),
+
+    scheduleId: yup
+      .number()
+      .nullable()
+      .optional()
+      .positive()
   })
 
   useEffect(() => {
@@ -66,8 +75,9 @@ export default function EditProductScreen ({ navigation, route }) {
         })
       }
     }
+
     fetchProductCategories()
-  }, [])
+  }, []) // Se carga una vez solo cuando se inicia la página por primera vez
 
   useEffect(() => {
     async function fetchProductDetail () {
@@ -88,6 +98,31 @@ export default function EditProductScreen ({ navigation, route }) {
     }
     fetchProductDetail()
   }, [route])
+
+  useEffect(() => {
+    async function fetchSchedules () {
+      try {
+        // Primero buscamos el restaurante al que pertenece el producto
+        const fetchedRestaurantSchedules = await getRestaurantSchedules(product.restaurantId)
+        const fetchedSchedules = fetchedRestaurantSchedules.map((schedule) => {
+          return {
+            label: `${schedule.startTime} - ${schedule.endTime}`,
+            value: schedule.id
+          }
+        })
+        setSchedules(fetchedSchedules)
+        // Luego vemos los horarios disponibles en ese restaurante
+      } catch (error) {
+        showMessage({
+          message: `There was an error while retrieving schedules. ${error} `,
+          type: 'error',
+          style: GlobalStyles.flashStyle,
+          titleStyle: GlobalStyles.flashTextStyle
+        })
+      }
+    }
+    if (product) { fetchSchedules() }
+  }, [product])
 
   const pickImage = async (onSuccess) => {
     const result = await ExpoImagePicker.launchImageLibraryAsync({
@@ -164,6 +199,26 @@ export default function EditProductScreen ({ navigation, route }) {
               />
               <ErrorMessage name={'productCategoryId'} render={msg => <TextError>{msg}</TextError> }/>
 
+              { /* Hacemos otro DropDown para elegir el Schedule */}
+              <TextRegular textStyle={styles.textLabel}>Schedule: </TextRegular>
+              <DropDownPicker
+                open={isScheduleDropdownOpen}
+                value={values.scheduleId} // Está dentro de los initialValues ----> Esto sirve para ver cual es la opción seleccionada
+                items={[
+                  { label: 'Not scheduled', value: null },
+                  ...schedules
+                ]} // Muestra los items que se verán en el desplegable
+                setOpen={setIsScheduleDropdownOpen}
+                onSelectItem={item => {
+                  setFieldValue('scheduleId', item.value)
+                }}
+                setItems={setSchedules}
+                placeholder="Not scheduled"
+                containerStyle={{ height: 40, marginBottom: 10 }}
+                style={{ backgroundColor: GlobalStyles.brandBackground }}
+                dropDownStyle={{ backgroundColor: '#fafafa' }}
+              />
+              <ErrorMessage name={'scheduleId'} render={msg => <TextError>{msg}</TextError>}/>
               <TextRegular textStyle={styles.textLabel}>Available:</TextRegular>
               <Switch
                 trackColor={{ false: GlobalStyles.brandSecondary, true: GlobalStyles.brandPrimary }}
