@@ -63,6 +63,12 @@ export default function RestaurantsStack () {
         options={{
           title: 'Create Schedule'
         }} />
+        <Stack.Screen
+        name='EditScheduleScreen'
+        component={EditScheduleScreen}
+        options={{
+          title: 'Edit Schedule'
+        }} />
 
     </Stack.Navigator>
   )

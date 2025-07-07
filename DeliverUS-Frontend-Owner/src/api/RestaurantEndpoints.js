@@ -27,7 +27,10 @@ const remove = (id) => {
 const getRestaurantSchedules = (id) => {
   return get(`/restaurants/${id}/schedules`)
 }
-
+// Creamos un endpoint para acceder a un único schedule
+const getRestaurantSchedule = async (restaurantId, scheduleId) => {
+  return (await getRestaurantSchedules(restaurantId)).find(schedule => schedule.id === scheduleId)
+}
 const createSchedule = (restaurantId, data) => {
   return post(`/restaurants/${restaurantId}/schedules`, data)
 }
@@ -40,4 +43,4 @@ const removeSchedule = (restaurantId, scheduleId) => {
   return destroy(`/restaurants/${restaurantId}/schedules/${scheduleId}`)
 }
 
-export { getAll, getDetail, getRestaurantCategories, create, update, remove, getRestaurantSchedules, createSchedule, updateSchedule, removeSchedule }
+export { getAll, getDetail, getRestaurantCategories, create, update, remove, getRestaurantSchedules, getRestaurantSchedule, createSchedule, updateSchedule, removeSchedule }
