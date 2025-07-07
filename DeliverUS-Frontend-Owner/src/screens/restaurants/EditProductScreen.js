@@ -202,7 +202,7 @@ export default function EditProductScreen ({ navigation, route }) {
               <TextRegular textStyle={styles.textLabel}>Schedule: </TextRegular>
               <DropDownPicker
                 open={isScheduleDropdownOpen}
-                value={values.scheduleId}
+                value={values.scheduleId} // Indica lo que se muestra en el placeholder una vez seleccionado
                 items={[
                   { label: 'Not scheduled', value: null },
                   ...schedules
