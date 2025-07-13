@@ -16,6 +16,7 @@ import scheduleIcon from '../../../assets/schedule.png'
 export default function RestaurantSchedulesScreen ({ navigation, route }) {
   const { loggedInUser } = useContext(AuthorizationContext)
   const [schedules, setSchedules] = useState([])
+  const [scheduleToBeDeleted, setScheduleToBeDeleted] = useState(null)
 
   useEffect(() => {
     if (loggedInUser) {
@@ -32,6 +33,47 @@ export default function RestaurantSchedulesScreen ({ navigation, route }) {
         title={item.name}
       >
         { /* TODO: mostrar los datos del horario */}
+        <TextSemiBold>Start Time: <TextRegular style={{ color: GlobalStyles.brandGreen }}>{item.startTime}</TextRegular></TextSemiBold>
+        <TextSemiBold>End Time: <TextRegular style={{ color: GlobalStyles.brandPrimary }}>{item.endTime}</TextRegular></TextSemiBold>
+        <TextSemiBold style={{ color: item.products.length !== 0 ? GlobalStyles.brandSecondary : GlobalStyles.brandPrimary, textAlign: 'right' }}>{item.products.length} products associated</TextSemiBold>
+        <View style={styles.actionButtonsContainer}>
+          <Pressable
+            onPress={() => navigation.navigate('EditScheduleScreen', { id: item.id, restaurantId: route.params.id })
+            }
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed
+                  ? GlobalStyles.brandBlueTap
+                  : GlobalStyles.brandBlue
+              },
+              styles.actionButton
+            ]}>
+          <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
+            <MaterialCommunityIcons name='pencil' color={'white'} size={20}/>
+            <TextRegular textStyle={styles.text}>
+              Edit
+            </TextRegular>
+          </View>
+        </Pressable>
+
+        <Pressable
+            onPress={() => { setScheduleToBeDeleted(item) }}
+            style={({ pressed }) => [
+              {
+                backgroundColor: pressed
+                  ? GlobalStyles.brandPrimaryTap
+                  : GlobalStyles.brandPrimary
+              },
+              styles.actionButton
+            ]}>
+          <View style={[{ flex: 1, flexDirection: 'row', justifyContent: 'center' }]}>
+            <MaterialCommunityIcons name='delete' color={'white'} size={20}/>
+            <TextRegular textStyle={styles.text}>
+              Delete
+            </TextRegular>
+          </View>
+        </Pressable>
+        </View>
       </ImageCard>
     )
   }
@@ -72,14 +114,38 @@ export default function RestaurantSchedulesScreen ({ navigation, route }) {
   }
 
   const fetchSchedules = async () => {
-
+    try {
+      const fetchedSchedules = await getRestaurantSchedules(route.params.id)
+      setSchedules(fetchedSchedules)
+    } catch (error) {
+      showMessage({
+        message: `There was an error while retrieving restaurant schedules (id ${route.params.id}). ${error}`,
+        type: 'error',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    }
   }
 
   const remove = async (schedule) => {
-
+    try {
+      await removeSchedule(route.params.id, schedule.id)
+      // Una vez eliminado actualizamos la pantalla
+      await fetchSchedules()
+      // Quitamos el modal
+      setScheduleToBeDeleted(null)
+    } catch (error) {
+      showMessage({
+        message: `There was an error while removing restaurant schedule. ${error}`,
+        type: 'error',
+        style: GlobalStyles.flashStyle,
+        titleStyle: GlobalStyles.flashTextStyle
+      })
+    }
   }
 
   return (
+    <>
     <FlatList
       style={styles.container}
       data={schedules}
@@ -88,6 +154,13 @@ export default function RestaurantSchedulesScreen ({ navigation, route }) {
       ListHeaderComponent={renderHeader}
       ListEmptyComponent={renderEmptySchedulesList}
     />
+    <DeleteModal
+      isVisible={scheduleToBeDeleted !== null}
+      onCancel={() => setScheduleToBeDeleted(null)}
+      onConfirm={() => remove(scheduleToBeDeleted)}>
+        <TextRegular>The schedule of this restaurant will be deleted</TextRegular>
+    </DeleteModal>
+    </>
   )
 }
 
